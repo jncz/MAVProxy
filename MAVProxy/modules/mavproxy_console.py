@@ -378,8 +378,11 @@ class ConsoleModule(mp_module.MPModule):
                             vfr_hud_heading = None
                         else:
                             vfr_hud_heading /= 100
-                gps_heading = int(msg.cog * 0.01)
-                if vfr_hud_heading is None:
+                if math.isnan(msg.cog):
+                    gps_heading = 0
+                else:
+                    gps_heading = int(msg.cog * 0.01)
+                if vfr_hud_heading is None or math.isnan(vfr_hud_heading):
                     vfr_hud_heading = '---'
                 else:
                     vfr_hud_heading = '%3u' % vfr_hud_heading
