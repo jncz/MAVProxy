@@ -67,10 +67,12 @@ echo Current Version: %VERSION%
 echo.
 
 rem Install MAVProxy - must run from parent dir where setup.py exists
+rem Use non-editable install so PyInstaller can find and package all modules
 cd /d "%SCRIPT_DIR%\.."
 echo [INFO] [1/4] Installing MAVProxy (cwd: %cd%)... >> "%LOG_FILE%"
-echo [INFO] [1/4] Installing MAVProxy...
-"%VENV_PIP%" install -e . >> "%LOG_FILE%" 2>&1
+echo [INFO] [1/4] Installing MAVProxy (non-editable)...
+"%VENV_PIP%" uninstall -y MAVProxy >> "%LOG_FILE%" 2>&1
+"%VENV_PIP%" install . >> "%LOG_FILE%" 2>&1
 if errorlevel 1 (
     echo [ERROR] MAVProxy installation failed
     echo [ERROR] MAVProxy install failed >> "%LOG_FILE%"
@@ -81,9 +83,9 @@ echo [OK] MAVProxy installed >> "%LOG_FILE%"
 echo.
 
 rem Install runtime dependencies
-echo [INFO] [2/4] Installing runtime dependencies (pyserial, pymavlink, wxpython)... >> "%LOG_FILE%"
+echo [INFO] [2/4] Installing runtime dependencies (pyserial, pymavlink, wxpython, matplotlib, python-dateutil, pygame, setuptools)... >> "%LOG_FILE%"
 echo [INFO] [2/4] Installing runtime dependencies...
-"%VENV_PIP%" install pyserial pymavlink wxpython >> "%LOG_FILE%" 2>&1
+"%VENV_PIP%" install pyserial pymavlink wxpython matplotlib python-dateutil pygame "setuptools<81" >> "%LOG_FILE%" 2>&1
 if errorlevel 1 (
     echo [WARN] Some dependencies failed to install, continuing...
     echo [WARN] Some deps failed >> "%LOG_FILE%"
@@ -135,7 +137,6 @@ if errorlevel 1 (
     exit /b 1
 )
 
-del mavproxy.spec >> "%LOG_FILE%" 2>&1
 echo [OK] Build completed >> "%LOG_FILE%"
 
 cd /d "%SCRIPT_DIR%"
