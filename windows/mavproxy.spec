@@ -6,15 +6,16 @@ MAVProxyAny = Analysis(['mavproxy.py'],
              pathex=[os.path.abspath('.')],
              # for some unknown reason these hidden imports don't pull in
              # all the needed pieces, so we also import them in mavproxy.py
-             hiddenimports=['cv2', 'wx', 'pylab', 
-                            'numpy', 'dateutil', 'matplotlib',
+             hiddenimports=['cv2', 'wx', 'pylab',
+                            'numpy', 'dateutil',
                             'HTMLParser', 'wx.grid', 'wx._grid', 'prompt_toolkit',
                             'wx.lib.agw.genericmessagedialog', 'wx.lib.wordwrap', 'wx.lib.buttons',
-                            'wx.lib.embeddedimage', 'wx.lib.imageutils', 'wx.lib.agw.aquabutton', 
+                            'wx.lib.embeddedimage', 'wx.lib.imageutils', 'wx.lib.agw.aquabutton',
                             'wx.lib.agw.gradientbutton',
                             'packaging', 'packaging.version', 'packaging.specifiers',
                             'requests',
-                            ] + collect_submodules('MAVProxy.modules') + 
+                            ] + collect_submodules('matplotlib') + collect_submodules('pylab') +
+                            collect_submodules('MAVProxy.modules') +
                             collect_submodules('pymavlink') + collect_submodules('yaml') + collect_submodules('pygame'),
              datas= [ ('modules\\mavproxy_map\\data\\*.*', 'MAVProxy\\modules\\mavproxy_map\\data' ),
                       ('modules\\mavproxy_joystick\\joysticks\\*.*', 'MAVProxy\\modules\\mavproxy_joystick\\joysticks' )],
@@ -25,14 +26,15 @@ MAVExpAny = Analysis(['.\\tools\\MAVExplorer.py'],
              pathex=[os.path.abspath('.')],
              # for some unknown reason these hidden imports don't pull in
              # all the needed pieces, so we also import them in mavproxy.py
-             hiddenimports=['cv2', 'wx', 'pylab', 
-                            'numpy', 'dateutil', 'matplotlib',
+             hiddenimports=['cv2', 'wx', 'pylab',
+                            'numpy', 'dateutil',
                             'requests',
                             'prompt_toolkit', 'HTMLParser', 'wx.grid', 'wx._grid',
                             'wx.lib.agw.genericmessagedialog', 'wx.lib.wordwrap', 'wx.lib.buttons',
-                            'wx.lib.embeddedimage', 'wx.lib.imageutils', 'wx.lib.agw.aquabutton', 
+                            'wx.lib.embeddedimage', 'wx.lib.imageutils', 'wx.lib.agw.aquabutton',
                             'wx.lib.agw.gradientbutton', 'FileDialog', 'Dialog',
-                            ] + collect_submodules('pymavlink'),
+                            ] + collect_submodules('matplotlib') + collect_submodules('pylab') +
+                            collect_submodules('pymavlink'),
              datas= [ ('tools\\graphs\\*.*', 'MAVProxy\\tools\\graphs' ) ],
              hookspath=None,
              runtime_hooks=None,

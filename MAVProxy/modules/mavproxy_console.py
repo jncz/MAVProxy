@@ -440,7 +440,12 @@ class ConsoleModule(mp_module.MPModule):
             self.console.set_status('Alt', 'Alt %s' % self.height_string(rel_alt))
             self.console.set_status('AirSpeed', 'AirSpeed %s' % self.speed_string(msg.airspeed))
             self.console.set_status('GPSSpeed', 'GPSSpeed %s' % self.speed_string(msg.groundspeed))
-            self.console.set_status('Thr', 'Thr %u' % msg.throttle)
+            throttle = msg.throttle
+            if throttle != throttle:  # NaN check
+                throttle_str = "---"
+            else:
+                throttle_str = str(int(throttle))
+            self.console.set_status('Thr', 'Thr %s' % throttle_str)
 
             sysid = msg.get_srcSystem()
             if (sysid not in self.flight_information or
@@ -710,7 +715,12 @@ class ConsoleModule(mp_module.MPModule):
             self.console.set_status('Alt', 'Alt %s' % self.height_string(msg.altitude - self.module('terrain').ElevationModel.GetElevation(msg.latitude / 1E7, msg.longitude / 1E7)))
             self.console.set_status('AirSpeed', 'AirSpeed %s' % self.speed_string(msg.airspeed / 5))
             self.console.set_status('GPSSpeed', 'GPSSpeed %s' % self.speed_string(msg.groundspeed / 5))
-            self.console.set_status('Thr', 'Thr %u' % msg.throttle)
+            throttle = msg.throttle
+            if throttle != throttle:  # NaN check
+                throttle_str = "---"
+            else:
+                throttle_str = str(int(throttle))
+            self.console.set_status('Thr', 'Thr %s' % throttle_str)
             self.console.set_status('Heading', 'Hdg %s/---' % (msg.heading * 2))
             self.console.set_status('WP', 'WP %u/--' % (msg.wp_num))
             
