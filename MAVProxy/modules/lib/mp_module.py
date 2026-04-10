@@ -205,6 +205,8 @@ class MPModule(object):
 
     def speed_string(self, val_ms):
         '''return a speed as a string'''
+        if val_ms != val_ms:  # NaN check
+            return "---"
         if self.settings.speed_unit == 'knots':
             return "%ukn" % (val_ms * 1.94384)
         elif self.settings.speed_unit == 'mph':

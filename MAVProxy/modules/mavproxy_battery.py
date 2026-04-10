@@ -47,7 +47,10 @@ class BatteryModule(mp_module.MPModule):
 
     def numcells(self, id):
         ncells = "numcells" + self.idstr(id)
-        return self.settings.get_setting(ncells).value
+        try:
+            return self.settings.get_setting(ncells).value
+        except KeyError:
+            return 0
 
     def cmd_bat(self, args):
         '''show battery levels'''
