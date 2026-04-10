@@ -83,9 +83,9 @@ echo [OK] MAVProxy installed >> "%LOG_FILE%"
 echo.
 
 rem Install runtime dependencies
-echo [INFO] [2/4] Installing runtime dependencies (pyserial, pymavlink, wxpython, matplotlib, python-dateutil, pygame, setuptools)... >> "%LOG_FILE%"
+echo [INFO] [2/4] Installing runtime dependencies... >> "%LOG_FILE%"
 echo [INFO] [2/4] Installing runtime dependencies...
-"%VENV_PIP%" install pyserial pymavlink wxpython matplotlib python-dateutil pygame "setuptools<81" >> "%LOG_FILE%" 2>&1
+"%VENV_PIP%" install pyserial pymavlink wxpython matplotlib python-dateutil pygame opencv-python "setuptools<81" >> "%LOG_FILE%" 2>&1
 if errorlevel 1 (
     echo [WARN] Some dependencies failed to install, continuing...
     echo [WARN] Some deps failed >> "%LOG_FILE%"
