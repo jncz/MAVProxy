@@ -537,8 +537,15 @@ def cmd_setup(args):
 
 
 def cmd_reset(args):
+    '''reopen the connection to the MAVLink master'''
+    master = mpstate.master()
     print("Resetting master")
-    mpstate.master().reset()
+    if hasattr(master, 'reset'):
+        master.reset()
+    elif hasattr(master, 'reconnect'):
+        master.reconnect()
+    else:
+        print("Reset not supported on this connection type")
 
 
 def cmd_click(args):
