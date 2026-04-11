@@ -444,6 +444,18 @@ class LinkModule(mp_module.MPModule):
         if signing:
             signing.setup_signing_device(conn, device)
 
+        # Patch mavtcp reconnect to update self.fd after reconnection
+        # The base reconnect() doesn't update self.fd, causing select() to monitor
+        # the old (closed) socket instead of the new one
+        if hasattr(conn, 'reconnect') and hasattr(conn, 'port'):
+            original_reconnect = conn.reconnect
+            def patched_reconnect():
+                original_reconnect()
+                # After reconnect, update fd to the new port's fileno
+                if conn.port is not None:
+                    conn.fd = conn.port.fileno()
+            conn.reconnect = patched_reconnect
+
         self.mpstate.mav_master.append(conn)
         self.status.counters['MasterIn'].append(0)
         self.status.bytecounters['MasterIn'].append(self.status.ByteCounter())
