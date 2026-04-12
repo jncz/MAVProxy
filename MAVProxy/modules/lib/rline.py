@@ -29,13 +29,91 @@ else:
 rline_mpstate = None
 #redisplay = None
 
+# Check if we should use simple input mode (no prompt_toolkit)
+# This is set when running in daemon/non-interactive mode or when no console is available
+# Also auto-detect PyInstaller frozen environment where console might not be available
+_use_simple_input = os.environ.get('MAVPROXY_SIMPLE_INPUT', '0') == '1'
+
+
+def _check_console_available():
+    """检测 Windows 环境下控制台是否可用
+
+    当运行在 PyInstaller 打包的可执行文件中，且被其他 Python 代码调用时，
+    可能不存在真实的控制台窗口，导致 prompt_toolkit 初始化失败。
+
+    Returns:
+        bool: True 表示有可用控制台，False 表示无控制台
+    """
+    if platform.system() != 'Windows' or sys.version_info < (3, 0):
+        return True
+
+    # 不在 frozen 环境时，假设有控制台
+    if not getattr(sys, 'frozen', False):
+        return True
+
+    # 在 frozen 环境时，尝试检测控制台是否可用
+    # 通过尝试获取标准输出句柄来判断
+    try:
+        import msvcrt
+        from ctypes import windll, c_void_p, byref
+        from ctypes.wintypes import DWORD
+
+        STD_OUTPUT_HANDLE = -11
+        INVALID_HANDLE_VALUE = c_void_p(-1).value
+
+        hconsole = windll.kernel32.GetStdHandle(STD_OUTPUT_HANDLE)
+        if hconsole == INVALID_HANDLE_VALUE or hconsole is None:
+            return False
+
+        # 尝试获取控制台屏幕缓冲区信息
+        class COORD:
+            def __init__(self):
+                self.X = 0
+                self.Y = 0
+
+        class SMALL_RECT:
+            def __init__(self):
+                self.Left = 0
+                self.Top = 0
+                self.Right = 0
+                self.Bottom = 0
+
+        class CONSOLE_SCREEN_BUFFER_INFO:
+            def __init__(self):
+                self.dwSize = COORD()
+                self.dwCursorPosition = COORD()
+                self.wAttributes = 0
+                self.srWindow = SMALL_RECT()
+                self.dwMaximumWindowSize = COORD()
+
+        sbinfo = CONSOLE_SCREEN_BUFFER_INFO()
+        success = windll.kernel32.GetConsoleScreenBufferInfo(hconsole, byref(sbinfo))
+        return bool(success)
+    except Exception:
+        # 检测失败时，保守假设无控制台
+        return False
+
+
+# 初始化时检查控制台可用性
+# 注意：这个检查在模块导入时执行，对于 frozen 环境会在启动时做一次检测
+# 如果后续被调用的环境发生变化（如从有控制台变为无控制台），需要重新设置
+if _use_simple_input:
+    # 环境变量已明确设置
+    pass
+elif getattr(sys, 'frozen', False):
+    # frozen 环境且未明确设置时，检测控制台可用性
+    if not _check_console_available():
+        _use_simple_input = True
+
+
 class rline(object):
     '''async readline abstraction'''
     def __init__(self, prompt, mpstate):
         global rline_mpstate
         self.prompt = prompt
         rline_mpstate = mpstate
-        
+        self.use_simple_input = _use_simple_input
+
         # other modules can add their own completion functions
         mpstate.completion_functions = {
             '(FILENAME)' : complete_filename,
@@ -49,11 +127,16 @@ class rline(object):
             '(LOADEDMODULES)' : complete_loadedmodules
             }
 
-        if platform.system() == 'Windows' and sys.version_info >= (3, 0):
+        if platform.system() == 'Windows' and sys.version_info >= (3, 0) and not _use_simple_input:
             # Create key bindings registry with a custom binding for the Tab key that
             # displays completions like GNU readline.
-            self.session = PromptSession()
-            mpstate.completor = MAVPromptCompleter()
+            try:
+                self.session = PromptSession()
+                mpstate.completor = MAVPromptCompleter()
+            except Exception as e:
+                # Fall back to simple input if prompt_toolkit fails (e.g., no console)
+                print(f"Warning: prompt_toolkit init failed ({e}), using simple input", file=sys.stderr)
+                self.use_simple_input = True
 
     def set_prompt(self, prompt):
         if prompt != self.prompt:
@@ -84,10 +167,16 @@ class rline(object):
     def input(self):
         ''' get user input'''
         ret = ""
-        if platform.system() == 'Windows' and sys.version_info >= (3, 0):
+        if platform.system() == 'Windows' and sys.version_info >= (3, 0) and not self.use_simple_input:
             global rline_mpstate
-            with patch_stdout():
-                return self.session.prompt(self.get_prompt,completer=rline_mpstate.completor, complete_while_typing=False, complete_style=CompleteStyle.READLINE_LIKE, refresh_interval=0.5)
+            try:
+                with patch_stdout():
+                    return self.session.prompt(self.get_prompt,completer=rline_mpstate.completor, complete_while_typing=False, complete_style=CompleteStyle.READLINE_LIKE, refresh_interval=0.5)
+            except Exception as e:
+                # Fall back to simple input if prompt_toolkit fails
+                print(f"Warning: prompt_toolkit input failed ({e}), using simple input", file=sys.stderr)
+                self.use_simple_input = True
+                return input(self.get_prompt())
         else:
             return input(self.get_prompt())
 

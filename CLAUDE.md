@@ -56,3 +56,23 @@ python scripts/run_flake8.py MAVProxy
 - Python 3
 - 文件包含 `AP_FLAKE8_CLEAN` 标记表示已通过 flake8 检查
 - max-line-length: 127 (见 `.flake8`)
+
+## 环境变量
+
+### MAVPROXY_SIMPLE_INPUT
+
+控制 MAVProxy 是否使用简单输入模式（不依赖 prompt_toolkit）。
+
+- `MAVPROXY_SIMPLE_INPUT=1` - 强制使用简单输入模式
+- `MAVPROXY_SIMPLE_INPUT=0` - 禁用简单输入模式（默认）
+
+**使用场景：**
+- 当 PyInstaller 打包的 exe 被其他 Python 代码调用时（无控制台环境），自动启用
+- 当在非交互式/守护进程模式运行时
+- 当 prompt_toolkit 初始化失败时（会自动回退）
+
+### Windows 打包环境
+
+在 PyInstaller 打包环境下（`sys.frozen=True`），MAVProxy 会自动检测控制台可用性：
+- 在 cmd.exe 中运行 → 使用 prompt_toolkit（完整功能）
+- 被其他 Python 代码调用（无控制台）→ 自动回退到简单输入模式
